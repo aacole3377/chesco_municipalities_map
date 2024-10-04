@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 import './styles/MapComponent.css';
 
 const MapComponent = ({ censusData, metric, setMetric, selectedMunicipality }) => {  
@@ -10,7 +11,6 @@ const MapComponent = ({ censusData, metric, setMetric, selectedMunicipality }) =
 
   useEffect(() => {
     const fetchGeoJSON = async () => {
-      // const response = await fetch('/chester_county_municipalities.geojson');
       const response = await fetch(process.env.PUBLIC_URL + '/chester_county_municipalities.geojson');
       const geojson = await response.json();
       setGeoJsonData(geojson);
@@ -39,29 +39,25 @@ const MapComponent = ({ censusData, metric, setMetric, selectedMunicipality }) =
       geoJsonLayerRef.current.eachLayer((layer) => {
         const geoJsonName = normalizeName(layer.feature.properties.MUNI_NAME);
         if (normalizeName(selectedMunicipality).includes(geoJsonName)) {
-          layer.openPopup();  // Trigger the popup when a municipality is clicked from the table
+          layer.openPopup();
         }
       });
     }
   }, [selectedMunicipality]);
 
-  // Update popups 
   useEffect(() => {
     if (geoJsonLayerRef.current) {
       geoJsonLayerRef.current.eachLayer((layer) => {
         const geoJsonName = normalizeName(layer.feature.properties.MUNI_NAME);
         let value;
         
-        // Find matching census data for the municipality
         if (censusData) {  
           const match = censusData.find((d) => normalizeName(d[0]).includes(geoJsonName));
           value = match ? parseFloat(match[1]) : 'Data not available';
         }
         
-        // Dynamically set the label based on the selected metric
         const metricLabel = metric === 'income' ? 'Median Income' : 'Population';
         
-        // Update the popup content dynamically based on the metric
         layer.bindPopup(`
           <strong>${layer.feature.properties.MUNI_NAME}</strong><br>
           ${metricLabel}: ${value ? value : 'N/A'}
@@ -106,7 +102,6 @@ const MapComponent = ({ censusData, metric, setMetric, selectedMunicipality }) =
     const geoJsonName = normalizeName(feature.properties.MUNI_NAME);  
     let value;
     
-    // Find matching census data for the municipality
     if (censusData) {  
       const match = censusData.find((d) => normalizeName(d[0]).includes(geoJsonName));
       value = match ? parseFloat(match[1]) : 'Data not available';
@@ -114,12 +109,54 @@ const MapComponent = ({ censusData, metric, setMetric, selectedMunicipality }) =
     
     const metricLabel = metric === 'income' ? 'Median Income' : 'Population';
     
-    // Bind popup to the layer (municipality) that shows name and the correct label for the metric
     layer.bindPopup(`
       <strong>${feature.properties.MUNI_NAME}</strong><br>
       ${metricLabel}: ${value ? value : 'N/A'}
     `);
   };
+
+  const Legend = () => {
+    const map = useMap();
+  
+    useEffect(() => {
+      const legend = L.control({ position: 'bottomright' });
+  
+      legend.onAdd = () => {
+        const div = L.DomUtil.create('div', 'info legend');
+        const labels = [];
+  
+        // Adding a background and border style to make it more readable
+        div.style.backgroundColor = 'white';
+        div.style.padding = '10px';
+        div.style.border = '2px solid black';
+        div.style.borderRadius = '5px';
+        div.style.fontSize = '14px';
+  
+        div.innerHTML = `<h4>${metric === 'income' ? 'Income Ranges' : 'Population Ranges'}</h4>`;
+        
+        // Loop through percentile ranges and associate colors with each bin
+        for (let i = 0; i < percentileRanges.length - 1; i++) {
+          const color = getColor(percentileRanges[i] + 1);
+          labels.push(
+            `<i style="background:${color}; width: 18px; height: 18px; display: inline-block; margin-right: 8px;"></i> 
+            ${Math.round(percentileRanges[i])} &ndash; ${Math.round(percentileRanges[i + 1])}<br>`
+          );
+        }
+  
+        div.innerHTML += labels.join('');
+        return div;
+      };
+  
+      legend.addTo(map);
+  
+      return () => {
+        map.removeControl(legend);
+      };
+    }, [map, percentileRanges, metric]);
+  
+    return null;
+  };
+  
 
   return (
     <div className="map-container">
@@ -147,9 +184,11 @@ const MapComponent = ({ censusData, metric, setMetric, selectedMunicipality }) =
             data={geoJsonData}
             style={styleFunction}
             onEachFeature={onEachFeature}
-            ref={geoJsonLayerRef}  // Store reference to GeoJSON layer
+            ref={geoJsonLayerRef}  
           />
         )}
+
+        <Legend />
       </MapContainer>
     </div>
   );
