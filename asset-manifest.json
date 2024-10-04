@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/aacole3377/chesco_municipalities_map.git/static/css/main.fad26144.css",
+    "main.js": "/aacole3377/chesco_municipalities_map.git/static/js/main.8d1d4d79.js",
+    "static/js/453.94735c49.chunk.js": "/aacole3377/chesco_municipalities_map.git/static/js/453.94735c49.chunk.js",
+    "index.html": "/aacole3377/chesco_municipalities_map.git/index.html",
+    "main.fad26144.css.map": "/aacole3377/chesco_municipalities_map.git/static/css/main.fad26144.css.map",
+    "main.8d1d4d79.js.map": "/aacole3377/chesco_municipalities_map.git/static/js/main.8d1d4d79.js.map",
+    "453.94735c49.chunk.js.map": "/aacole3377/chesco_municipalities_map.git/static/js/453.94735c49.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.fad26144.css",
+    "static/js/main.8d1d4d79.js"
+  ]
+}
