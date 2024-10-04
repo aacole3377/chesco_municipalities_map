@@ -10,7 +10,8 @@ const MapComponent = ({ censusData, metric, setMetric, selectedMunicipality }) =
 
   useEffect(() => {
     const fetchGeoJSON = async () => {
-      const response = await fetch('/chester_county_municipalities.geojson');
+      // const response = await fetch('/chester_county_municipalities.geojson');
+      const response = await fetch(process.env.PUBLIC_URL + '/chester_county_municipalities.geojson');
       const geojson = await response.json();
       setGeoJsonData(geojson);
     };
