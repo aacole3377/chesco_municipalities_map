@@ -8,6 +8,14 @@ const MapComponent = ({ censusData, metric, setMetric, selectedMunicipality }) =
   const [geoJsonData, setGeoJsonData] = useState(null);
   const [percentileRanges, setPercentileRanges] = useState([]);
   const geoJsonLayerRef = useRef(null);
+  const mapRef = useRef(null);
+
+  // Close all popups
+  const closeAllPopups = () => {
+    if (geoJsonLayerRef.current) {
+      geoJsonLayerRef.current.eachLayer((layer) => layer.closePopup()); // Close popups of all layers
+    }
+  };
 
   useEffect(() => {
     const fetchGeoJSON = async () => {
@@ -46,21 +54,31 @@ const MapComponent = ({ censusData, metric, setMetric, selectedMunicipality }) =
   }, [selectedMunicipality]);
 
   useEffect(() => {
+    // Close all popups when the metric changes
+    closeAllPopups();
+
+    // Rebind popups with new data
     if (geoJsonLayerRef.current) {
       geoJsonLayerRef.current.eachLayer((layer) => {
         const geoJsonName = normalizeName(layer.feature.properties.MUNI_NAME);
-        let value;
-        
-        if (censusData) {  
+        let value = 'N/A';
+  
+        if (censusData) {
           const match = censusData.find((d) => normalizeName(d[0]).includes(geoJsonName));
-          value = match ? parseFloat(match[1]) : 'Data not available';
+          value = match ? parseFloat(match[1]) : 'N/A';
         }
-        
-        const metricLabel = metric === 'income' ? 'Median Income' : 'Population';
-        
+  
+        const metricLabel = metric === 'income' ? 'Median Income' :
+                            metric === 'education' ? 'Higher Education Count' : 
+                            'Population';
+  
+        // First unbind the old popup if it exists
+        layer.unbindPopup();
+  
+        // Now bind the new popup
         layer.bindPopup(`
           <strong>${layer.feature.properties.MUNI_NAME}</strong><br>
-          ${metricLabel}: ${value ? value : 'N/A'}
+          ${metricLabel}: ${value !== 'N/A' ? value.toLocaleString() : 'N/A'}
         `);
       });
     }
@@ -82,12 +100,17 @@ const MapComponent = ({ censusData, metric, setMetric, selectedMunicipality }) =
   const styleFunction = (feature) => {
     const geoJsonName = normalizeName(feature.properties.MUNI_NAME); 
     let value;
-
-    if (censusData) {  
+  
+    if (censusData) {
       const match = censusData.find((d) => normalizeName(d[0]).includes(geoJsonName));
-      value = match ? parseFloat(match[1]) : null;
+      
+      if (metric === 'education' && match) {
+        value = parseFloat(match[1]); // Bachelor's degree count
+      } else {
+        value = match ? parseFloat(match[1]) : null; // Handle income or population
+      }
     }
-
+  
     return {
       fillColor: value ? getColor(value) : '#FFFFFF',
       weight: 2,
@@ -100,21 +123,32 @@ const MapComponent = ({ censusData, metric, setMetric, selectedMunicipality }) =
 
   const onEachFeature = (feature, layer) => {
     const geoJsonName = normalizeName(feature.properties.MUNI_NAME);  
-    let value;
-    
-    if (censusData) {  
+    let metricValue = 'N/A';
+  
+    if (censusData) {
       const match = censusData.find((d) => normalizeName(d[0]).includes(geoJsonName));
-      value = match ? parseFloat(match[1]) : 'Data not available';
+  
+      if (match) {
+        if (metric === 'education') {
+          metricValue = parseFloat(match[1]); // Bachelor's degree count
+        } else if (metric === 'income') {
+          metricValue = parseFloat(match[1]); // Median income
+        } else {
+          metricValue = parseFloat(match[1]); // Population
+        }
+      }
     }
-    
-    const metricLabel = metric === 'income' ? 'Median Income' : 'Population';
-    
+  
+    const metricLabel = metric === 'income' ? 'Median Income' :
+                        metric === 'education' ? 'Higher Education Count' : 
+                        'Population';
+  
     layer.bindPopup(`
       <strong>${feature.properties.MUNI_NAME}</strong><br>
-      ${metricLabel}: ${value ? value : 'N/A'}
+      ${metricLabel}: ${metricValue !== 'N/A' ? metricValue.toLocaleString() : 'N/A'}
     `);
   };
-
+    
   const Legend = () => {
     const map = useMap();
   
@@ -125,16 +159,18 @@ const MapComponent = ({ censusData, metric, setMetric, selectedMunicipality }) =
         const div = L.DomUtil.create('div', 'info legend');
         const labels = [];
   
-        // Adding a background and border style to make it more readable
         div.style.backgroundColor = 'white';
         div.style.padding = '10px';
         div.style.border = '2px solid black';
         div.style.borderRadius = '5px';
         div.style.fontSize = '14px';
   
-        div.innerHTML = `<h4>${metric === 'income' ? 'Income Ranges' : 'Population Ranges'}</h4>`;
-        
-        // Loop through percentile ranges and associate colors with each bin
+        const legendTitle = metric === 'income' ? 'Income Ranges' : 
+                            metric === 'education' ? 'Higher Education Ranges' : 
+                            'Population Ranges';
+  
+        div.innerHTML = `<h4>${legendTitle}</h4>`;
+  
         for (let i = 0; i < percentileRanges.length - 1; i++) {
           const color = getColor(percentileRanges[i] + 1);
           labels.push(
@@ -156,7 +192,6 @@ const MapComponent = ({ censusData, metric, setMetric, selectedMunicipality }) =
   
     return null;
   };
-  
 
   return (
     <div className="map-container">
@@ -165,6 +200,7 @@ const MapComponent = ({ censusData, metric, setMetric, selectedMunicipality }) =
       <select className="metric-dropdown" value={metric} onChange={(e) => setMetric(e.target.value)}>
         <option value="income">Median Income</option>
         <option value="population">Population</option>
+        <option value="education">Education</option>
       </select>
 
       <MapContainer 
@@ -173,6 +209,7 @@ const MapComponent = ({ censusData, metric, setMetric, selectedMunicipality }) =
         style={{ height: '600px', width: '100%' }}
         scrollWheelZoom={false} 
         doubleClickZoom={false} 
+        whenCreated={mapInstance => mapRef.current = mapInstance}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

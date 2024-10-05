@@ -18,6 +18,8 @@ function App() {
         apiUrl = `https://api.census.gov/data/2020/acs/acs5?get=NAME,B19013_001E&for=county%20subdivision:*&in=state:42%20county:029&key=${CENSUS_API_KEY}`;
       } else if (metric === 'population') {
         apiUrl = `https://api.census.gov/data/2020/acs/acs5?get=NAME,B01003_001E&for=county%20subdivision:*&in=state:42%20county:029&key=${CENSUS_API_KEY}`;
+      } else if (metric === 'education') {
+        apiUrl = `https://api.census.gov/data/2020/acs/acs5?get=NAME,B15003_022E,B01003_001E&for=county%20subdivision:*&in=state:42%20county:029&key=${CENSUS_API_KEY}`;
       }
 
       try {
@@ -31,8 +33,9 @@ function App() {
     fetchCensusData();
   }, [metric]);
 
+  // Define the onMunicipalityClick function
   const onMunicipalityClick = (municipalityName) => {
-    setSelectedMunicipality(municipalityName);  
+    setSelectedMunicipality(municipalityName);
   };
 
   return (
