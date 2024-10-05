@@ -3,7 +3,7 @@ import MapComponent from './MapComponent';
 import Table from './Table';
 import axios from 'axios';
 
-const CENSUS_API_KEY = '9c7a8194b884d48fa6ddcd0352e3115dee8cbd33';  
+const CENSUS_API_KEY = process.env.REACT_APP_CENSUS_API_KEY;  
 
 function App() {
   const [censusData, setCensusData] = useState(null);  
@@ -33,7 +33,6 @@ function App() {
     fetchCensusData();
   }, [metric]);
 
-  // Define the onMunicipalityClick function
   const onMunicipalityClick = (municipalityName) => {
     setSelectedMunicipality(municipalityName);
   };
