@@ -46,7 +46,7 @@ tbody tr {
 }
 
 tbody td {
-    text-align: right; 
+    text-align: left; 
 }
 
 tbody td:first-child {
