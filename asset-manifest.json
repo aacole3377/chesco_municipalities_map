@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/chesco_municipalities_map/static/css/main.d2f01850.css",
-    "main.js": "/chesco_municipalities_map/static/js/main.1d162bd6.js",
+    "main.js": "/chesco_municipalities_map/static/js/main.269ca5d1.js",
     "static/js/453.94735c49.chunk.js": "/chesco_municipalities_map/static/js/453.94735c49.chunk.js",
     "index.html": "/chesco_municipalities_map/index.html",
     "main.d2f01850.css.map": "/chesco_municipalities_map/static/css/main.d2f01850.css.map",
-    "main.1d162bd6.js.map": "/chesco_municipalities_map/static/js/main.1d162bd6.js.map",
+    "main.269ca5d1.js.map": "/chesco_municipalities_map/static/js/main.269ca5d1.js.map",
     "453.94735c49.chunk.js.map": "/chesco_municipalities_map/static/js/453.94735c49.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.d2f01850.css",
-    "static/js/main.1d162bd6.js"
+    "static/js/main.269ca5d1.js"
   ]
 }
